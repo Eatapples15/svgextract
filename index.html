@@ -6,13 +6,16 @@
 <body>
     <input type="file" id="fileInput">
     <button onclick="estraiIdComuni()">Estrai ID</button>
+    <p id="conteggioId"></p>
     <ul id="listaIdComuni"></ul>
 
     <script>
         function estraiIdComuni() {
             const fileInput = document.getElementById('fileInput');
             const listaIdComuni = document.getElementById('listaIdComuni');
+            const conteggioId = document.getElementById('conteggioId');
             listaIdComuni.innerHTML = ''; // Pulisci la lista precedente
+            conteggioId.textContent = ''; // Pulisci il conteggio precedente
 
             const file = fileInput.files[0];
             if (file) {
@@ -21,16 +24,27 @@
                     const svgString = event.target.result;
                     const parser = new DOMParser();
                     const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
-                    const elementiComuni = svgDoc.querySelectorAll('[id]'); // Seleziona elementi con attributo 'id'
+                    const elementiComuni = svgDoc.querySelectorAll('[id]');
 
+                    const idComuni = [];
                     elementiComuni.forEach(elemento => {
                         const idComune = elemento.id;
                         if (idComune) {
-                            const listItem = document.createElement('li');
-                            listItem.textContent = idComune;
-                            listaIdComuni.appendChild(listItem);
+                            idComuni.push(idComune);
                         }
                     });
+
+                    // Ordina gli ID alfabeticamente
+                    idComuni.sort();
+
+                    // Popola la lista e aggiorna il conteggio
+                    idComuni.forEach(idComune => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = idComune;
+                        listaIdComuni.appendChild(listItem);
+                    });
+
+                    conteggioId.textContent = `Trovati ${idComuni.length} ID`;
                 };
                 reader.readAsText(file);
             }
