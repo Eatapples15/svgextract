@@ -8,14 +8,17 @@
     <button onclick="estraiIdComuni()">Estrai ID</button>
     <p id="conteggioId"></p>
     <ul id="listaIdComuni"></ul>
+    <pre id="codiceSvg"></pre>
 
     <script>
         function estraiIdComuni() {
             const fileInput = document.getElementById('fileInput');
             const listaIdComuni = document.getElementById('listaIdComuni');
             const conteggioId = document.getElementById('conteggioId');
-            listaIdComuni.innerHTML = ''; // Pulisci la lista precedente
-            conteggioId.textContent = ''; // Pulisci il conteggio precedente
+            const codiceSvg = document.getElementById('codiceSvg');
+            listaIdComuni.innerHTML = '';
+            conteggioId.textContent = '';
+            codiceSvg.textContent = '';
 
             const file = fileInput.files[0];
             if (file) {
@@ -34,14 +37,18 @@
                         }
                     });
 
-                    // Ordina gli ID alfabeticamente
                     idComuni.sort();
 
-                    // Popola la lista e aggiorna il conteggio
                     idComuni.forEach(idComune => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = idComune;
-                        listaIdComuni.appendChild(listItem);
+                        const elementoTrovato = svgDoc.getElementById(idComune);
+                        if (elementoTrovato) {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = idComune;
+                            listaIdComuni.appendChild(listItem);
+                            codiceSvg.textContent += `ID: ${idComune}\n${elementoTrovato.outerHTML}\n\n`;
+                        } else {
+                            codiceSvg.textContent += `Errore: Porzione con ID '${idComune}' non trovata.\n\n`;
+                        }
                     });
 
                     conteggioId.textContent = `Trovati ${idComuni.length} ID`;
