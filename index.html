@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Estrai ID Comuni da SVG</title>
+</head>
+<body>
+    <input type="file" id="fileInput">
+    <button onclick="estraiIdComuni()">Estrai ID</button>
+    <ul id="listaIdComuni"></ul>
+
+    <script>
+        function estraiIdComuni() {
+            const fileInput = document.getElementById('fileInput');
+            const listaIdComuni = document.getElementById('listaIdComuni');
+            listaIdComuni.innerHTML = ''; // Pulisci la lista precedente
+
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const svgString = event.target.result;
+                    const parser = new DOMParser();
+                    const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+                    const elementiComuni = svgDoc.querySelectorAll('[id]'); // Seleziona elementi con attributo 'id'
+
+                    elementiComuni.forEach(elemento => {
+                        const idComune = elemento.id;
+                        if (idComune) {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = idComune;
+                            listaIdComuni.appendChild(listItem);
+                        }
+                    });
+                };
+                reader.readAsText(file);
+            }
+        }
+    </script>
+</body>
+</html>
