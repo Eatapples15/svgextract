@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>SVG Editor</title>
+<title>SVG Editor con Download</title>
 <style>
   body { font-family: sans-serif; }
   #svg-container { border: 1px solid #ccc; margin-bottom: 20px; }
@@ -10,7 +10,7 @@
 </head>
 <body>
 
-  <h1>SVG Editor</h1>
+  <h1>SVG Editor con Download</h1>
 
   <div class="controls">
     <label for="svg-file">Carica file SVG:</label>
@@ -20,9 +20,14 @@
   <div id="svg-container">
     </div>
 
+  <div class="controls">
+    <button id="download-svg" disabled>Scarica SVG con Basi</button>
+  </div>
+
   <script>
     const svgFileElement = document.getElementById('svg-file');
     const svgContainer = document.getElementById('svg-container');
+    const downloadButton = document.getElementById('download-svg');
 
     const raggruppamenti = {
       "Basi A1": ["Atella", "Palazzo San Gervasio", "Pescopagano", "Barile", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Maschito", "Melfi", "Montemilone", "Venosa", "Ginestra"],
@@ -35,6 +40,7 @@
     };
 
     let svgDocument;
+    let originalSvgString;
     let idElements = {};
 
     svgFileElement.addEventListener('change', function(event) {
@@ -43,14 +49,21 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           svgContainer.innerHTML = e.target.result;
+          originalSvgString = e.target.result;
           svgDocument = svgContainer.querySelector('svg');
           if (svgDocument) {
             extractAndGroupElements();
+            downloadButton.disabled = false;
           } else {
             alert('Il file caricato non sembra essere un SVG valido.');
+            downloadButton.disabled = true;
           }
         };
         reader.readAsText(file);
+      } else {
+        svgContainer.innerHTML = '';
+        svgDocument = null;
+        downloadButton.disabled = true;
       }
     });
 
@@ -63,6 +76,10 @@
       });
       console.log("ID Elements:", idElements);
 
+      // Prima rimuovi eventuali gruppi "Basi" esistenti per evitare duplicati
+      const existingBaseGroups = svgDocument.querySelectorAll('g[id^="Basi "]');
+      existingBaseGroups.forEach(group => group.remove());
+
       for (const nuovoId in raggruppamenti) {
         const comuniDelGruppo = raggruppamenti[nuovoId];
         const elementsToGroup = comuniDelGruppo.map(comuneId => idElements[comuneId]).filter(el => el);
@@ -72,17 +89,12 @@
           newGroup.setAttribute('id', nuovoId);
 
           elementsToGroup.forEach(element => {
+            // Assicurati di rimuovere l'elemento dal suo parent prima di aggiungerlo al nuovo gruppo
+            element.parentNode.removeChild(element);
             newGroup.appendChild(element);
           });
 
-          // Aggiungi il nuovo gruppo come primo figlio dell'elemento <svg>
-          const firstElement = svgDocument.firstChild;
-          svgDocument.insertBefore(newGroup, firstElement);
-
-          // Rimuovi gli elementi originali (ora figli del gruppo)
-          elementsToGroup.forEach(element => {
-            // L'elemento è già stato spostato, non c'è bisogno di rimuoverlo qui
-          });
+          svgDocument.appendChild(newGroup);
         } else {
           console.warn(`Nessun elemento trovato per il gruppo: ${nuovoId}`);
         }
@@ -90,6 +102,24 @@
 
       alert('Raggruppamento automatico completato!');
     }
+
+    downloadButton.addEventListener('click', function() {
+      if (svgDocument) {
+        // Ottieni la stringa serializzata dell'elemento SVG modificato
+        const serializer = new XMLSerializer();
+        const newSvgString = serializer.serializeToString(svgDocument);
+
+        // Crea un link temporaneo per il download
+        const downloadLink = document.createElement('a');
+        downloadLink.setAttribute('href', 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(newSvgString));
+        downloadLink.setAttribute('download', 'mappa_con_basi.svg');
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+      } else {
+        alert('Nessun SVG modificato da scaricare.');
+      }
+    });
   </script>
 
 </body>
