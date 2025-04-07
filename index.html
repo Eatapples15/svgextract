@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Modifica ID SVG</title>
+    <title>Estrai ID Comuni da SVG</title>
 </head>
 <body>
     <input type="file" id="fileInput">
-    <button onclick="modificaIdSvg()">Modifica ID e Salva SVG</button>
-    <a id="downloadLink" style="display: none;">Scarica Nuovo SVG</a>
+    <button onclick="estraiIdComuni()">Estrai ID</button>
+    <p id="conteggioId"></p>
+    <ul id="listaIdComuni"></ul>
+    <pre id="codiceSvg"></pre>
 
     <script>
-        function modificaIdSvg() {
+        function estraiIdComuni() {
             const fileInput = document.getElementById('fileInput');
-            const downloadLink = document.getElementById('downloadLink');
+            const listaIdComuni = document.getElementById('listaIdComuni');
+            const conteggioId = document.getElementById('conteggioId');
+            const codiceSvg = document.getElementById('codiceSvg');
+            listaIdComuni.innerHTML = '';
+            conteggioId.textContent = '';
+            codiceSvg.textContent = '';
 
             const file = fileInput.files[0];
             if (file) {
@@ -20,33 +27,31 @@
                     const svgString = event.target.result;
                     const parser = new DOMParser();
                     const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+                    const elementiComuni = svgDoc.querySelectorAll('[id]');
 
-                    // Lista dei nomi dei comuni da cercare
-                    const nomiComuni = ["Atella", "Chiaromonte", "Fardella", "Maratea", "Matera", "Noepoli", "SanMartinodAgri", "Tito", "Tricarico", "p_MT", "p_PZ"];
-
-                    // Trova e modifica gli ID degli elementi <path> e <g>
-                    nomiComuni.forEach(nomeComune => {
-                        const elementi = svgDoc.querySelectorAll(`path[id="${nomeComune}"], g[id="${nomeComune}"]`);
-                        if (elementi.length > 0) {
-                            //Se l'id è già corretto, non fare niente.
-                        } else {
-                          const elementi2 = svgDoc.querySelectorAll(`path[id], g[id]`);
-                          elementi2.forEach(element =>{
-                            if(element.id.toLowerCase() === nomeComune.toLowerCase()){
-                              element.id = nomeComune;
-                            }
-                          })
+                    const idComuni = [];
+                    elementiComuni.forEach(elemento => {
+                        const idComune = elemento.id;
+                        if (idComune) {
+                            idComuni.push(idComune);
                         }
                     });
 
-                    // Crea il nuovo file SVG
-                    const nuovoSvgString = new XMLSerializer().serializeToString(svgDoc);
-                    const blob = new Blob([nuovoSvgString], { type: 'image/svg+xml' });
-                    const url = URL.createObjectURL(blob);
+                    idComuni.sort();
 
-                    downloadLink.href = url;
-                    downloadLink.download = 'nuovo_svg_modificato.svg';
-                    downloadLink.style.display = 'block';
+                    idComuni.forEach(idComune => {
+                        const elementoTrovato = svgDoc.getElementById(idComune);
+                        if (elementoTrovato) {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = idComune;
+                            listaIdComuni.appendChild(listItem);
+                            codiceSvg.textContent += `ID: ${idComune}\n${elementoTrovato.outerHTML}\n\n`;
+                        } else {
+                            codiceSvg.textContent += `Errore: Porzione con ID '${idComune}' non trovata.\n\n`;
+                        }
+                    });
+
+                    conteggioId.textContent = `Trovati ${idComuni.length} ID`;
                 };
                 reader.readAsText(file);
             }
