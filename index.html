@@ -1,61 +1,276 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Estrai ID Comuni da SVG</title>
+<title>SVG Editor</title>
+<style>
+  body { font-family: sans-serif; }
+  #svg-container { border: 1px solid #ccc; margin-bottom: 20px; }
+  .controls { margin-bottom: 10px; }
+  .group { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; }
+  .group h3 { margin-top: 0; }
+</style>
 </head>
 <body>
-    <input type="file" id="fileInput">
-    <button onclick="estraiIdComuni()">Estrai ID</button>
-    <p id="conteggioId"></p>
-    <ul id="listaIdComuni"></ul>
-    <pre id="codiceSvg"></pre>
 
-    <script>
-        function estraiIdComuni() {
-            const fileInput = document.getElementById('fileInput');
-            const listaIdComuni = document.getElementById('listaIdComuni');
-            const conteggioId = document.getElementById('conteggioId');
-            const codiceSvg = document.getElementById('codiceSvg');
-            listaIdComuni.innerHTML = '';
-            conteggioId.textContent = '';
-            codiceSvg.textContent = '';
+  <h1>SVG Editor</h1>
 
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const svgString = event.target.result;
-                    const parser = new DOMParser();
-                    const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
-                    const elementiComuni = svgDoc.querySelectorAll('[id]');
+  <div class="controls">
+    <label for="svg-file">Carica file SVG:</label>
+    <input type="file" id="svg-file" accept=".svg">
+  </div>
 
-                    const idComuni = [];
-                    elementiComuni.forEach(elemento => {
-                        const idComune = elemento.id;
-                        if (idComune) {
-                            idComuni.push(idComune);
-                        }
-                    });
+  <div id="svg-container">
+    </div>
 
-                    idComuni.sort();
+  <div id="grouping-controls">
+    <h2>Raggruppamenti</h2>
+    </div>
 
-                    idComuni.forEach(idComune => {
-                        const elementoTrovato = svgDoc.getElementById(idComune);
-                        if (elementoTrovato) {
-                            const listItem = document.createElement('li');
-                            listItem.textContent = idComune;
-                            listaIdComuni.appendChild(listItem);
-                            codiceSvg.textContent += `ID: ${idComune}\n${elementoTrovato.outerHTML}\n\n`;
-                        } else {
-                            codiceSvg.textContent += `Errore: Porzione con ID '${idComune}' non trovata.\n\n`;
-                        }
-                    });
+  <script>
+    const svgFileElement = document.getElementById('svg-file');
+    const svgContainer = document.getElementById('svg-container');
+    const groupingControls = document.getElementById('grouping-controls');
 
-                    conteggioId.textContent = `Trovati ${idComuni.length} ID`;
-                };
-                reader.readAsText(file);
-            }
+    const comuniDaUnire = `
+Abriola PZ B Basi B
+Accettura MT B Basi B
+Acerenza PZ B Basi B
+Albano di Lucania PZ B Basi B
+Aliano MT C Basi C
+Anzi PZ B Basi B
+Armento PZ C Basi C
+Atella PZ A1 Basi A1
+Avigliano PZ B Basi B
+Balvano PZ A2 Basi A2
+Banzi PZ B Basi B
+Baragiano PZ A2 Basi A2
+Barile PZ A1 Basi A1
+Bella PZ A2 Basi A2
+Bernalda MT E2 Basi E2
+Brienza PZ A2 Basi A2
+Brindisi Montagna PZ B Basi B
+Calciano MT B Basi B
+Calvello PZ B Basi B
+Calvera PZ C Basi C
+Campomaggiore PZ B Basi B
+Cancellara PZ B Basi B
+Carbone PZ C Basi C
+Castelgrande PZ A2 Basi A2
+Castelluccio Inferiore PZ D Basi D
+Castelluccio Superiore PZ D Basi D
+Castelmezzano PZ B Basi B
+Castelsaraceno PZ D Basi D
+Castronuovo di Sant’ Andrea PZ C Basi C
+Cersosimo PZ C Basi C
+Chiaromonte PZ C Basi C
+Cirigliano MT C Basi C
+Colobraro MT C Basi C
+Corleto Perticara PZ C Basi C
+Craco MT E1 Basi E1
+Episcopia PZ C Basi C
+Fardella PZ C Basi C
+Ferrandina MT B Basi B
+Filiano PZ A1 Basi A1
+Forenza PZ A1 Basi A1
+Francavilla in Sinni PZ C Basi C
+Gallicchio PZ C Basi C
+Garaguso MT B Basi B
+Genzano di Lucania PZ B Basi B
+Ginestra PZ A1 Basi A1
+Gorgoglione MT C Basi C
+Grassano MT B Basi B
+Grottole MT B Basi B
+Grumento Nova PZ C Basi C
+Guardia Perticara PZ C Basi C
+Irsina MT B Basi B
+Lagonegro PZ D Basi D
+Latronico PZ D Basi D
+Laurenzana PZ B Basi B
+Lauria PZ D Basi D
+Lavello PZ A1 Basi A1
+Maratea PZ D Basi D
+Marsico Nuovo PZ C Basi C
+Marsicovetere PZ C Basi C
+Maschito PZ A1 Basi A1
+Matera MT B Basi B
+Melfi PZ A1 Basi A1
+Miglionico MT B Basi B
+Missanello PZ C Basi C
+Moliterno PZ C Basi C
+Montalbano Jonico MT E1 Basi E1
+Montemilone PZ A1 Basi A1
+Montemurro PZ C Basi C
+Montescaglioso MT E2 Basi E2
+Muro Lucano PZ A2 Basi A2
+Nemoli PZ D Basi D
+Noepoli PZ C Basi C
+Nova Siri MT E1 Basi E1
+Oliveto Lucano MT B Basi B
+Oppido Lucano PZ B Basi B
+Palazzo San Gervasio PZ A1 Basi A1
+Paterno PZ C Basi C
+Pescopagano PZ A1 Basi A1
+Picerno PZ A2 Basi A2
+Pietragalla PZ B Basi B
+Pietrapertosa PZ B Basi B
+Pignola PZ B Basi B
+Pisticci MT E2 Basi E2
+Policoro MT E1 Basi E1
+Pomarico MT B Basi B
+Potenza PZ B Basi B
+Rapolla PZ A1 Basi A1
+Rapone PZ A1 Basi A1
+Rionero in Vulture PZ A1 Basi A1
+Ripacandida PZ A1 Basi A1
+Rivello PZ D Basi D
+Roccanova PZ C Basi C
+Rotonda PZ D Basi D
+Rotondella MT E1 Basi E1
+Ruoti PZ A2 Basi A2
+Ruvo del Monte PZ A1 Basi A1
+Salandra MT B Basi B
+San Chirico Nuovo PZ B Basi B
+San Chirico Raparo PZ C Basi C
+San Costantino A. PZ C Basi C
+San Fele PZ A1 Basi A1
+San Giorgio Lucano MT C Basi C
+San Martino d’Agri PZ C Basi C
+San Mauro Forte MT B Basi B
+San Paolo Albanese PZ C Basi C
+San Severino Lucano PZ C Basi C
+Sant’ Angelo Le Fratte PZ A2 Basi A2
+Sant’ Arcangelo PZ C Basi C
+Sarconi PZ C Basi C
+Sasso di Castalda PZ A2 Basi A2
+Satriano di Lucania PZ A2 Basi A2
+Savoia di Lucania PZ A2 Basi A2
+Scanzano Jonico MT E1 Basi E1
+Senise PZ C Basi C
+Spinoso PZ C Basi C
+Stigliano MT C Basi C
+Teana PZ C Basi C
+Terranova di Pollino PZ C Basi C
+Tito PZ A2 Basi A2
+Tolve PZ B Basi B
+Tramutola PZ C Basi C
+Trecchina PZ D Basi D
+Tricarico MT B Basi B
+Trivigno PZ B Basi B
+Tursi MT C Basi C
+Vaglio Basilicata PZ B Basi B
+Valsinni MT C Basi C
+Venosa PZ A1 Basi A1
+Vietri di Potenza PZ A2 Basi A2
+Viggianello PZ D Basi D
+Viggiano PZ C Basi C
+`;
+
+    const nuovoGruppoIds = ["Basi A1", "Basi A2", "Basi B", "Basi C", "Basi D", "Basi E1", "Basi E2"];
+    let svgDocument;
+    let idElements = {};
+
+    svgFileElement.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          svgContainer.innerHTML = e.target.result;
+          svgDocument = svgContainer.querySelector('svg');
+          if (svgDocument) {
+            extractAndListIds();
+            generateGroupingControls();
+          } else {
+            alert('Il file caricato non sembra essere un SVG valido.');
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    function extractAndListIds() {
+      idElements = {};
+      const allElements = svgDocument.querySelectorAll('*[id]');
+      allElements.forEach(element => {
+        const id = element.getAttribute('id');
+        idElements[id] = element;
+      });
+      console.log("ID Elements:", idElements);
+    }
+
+    function generateGroupingControls() {
+      groupingControls.innerHTML = '<h2>Raggruppamenti</h2>';
+
+      nuovoGruppoIds.forEach(nuovoId => {
+        const groupDiv = document.createElement('div');
+        groupDiv.classList.add('group');
+        groupDiv.innerHTML = `<h3>Nuovo Gruppo: ${nuovoId}</h3>`;
+
+        const select = document.createElement('select');
+        select.multiple = true;
+        const comuniPerGruppo = {};
+        comuniDaUnire.trim().split('\n').forEach(line => {
+          const parts = line.split(' ');
+          const comune = parts[0];
+          const gruppoKey = parts[3];
+          if (!comuniPerGruppo[gruppoKey]) {
+            comuniPerGruppo[gruppoKey] = [];
+          }
+          comuniPerGruppo[gruppoKey].push(comune);
+        });
+
+        const comuniInQuestoNuovoGruppo = comuniPerGruppo[nuovoId] || [];
+        select.size = Math.min(10, Object.keys(idElements).length); // Mostra tutti gli ID disponibili
+
+        for (const id in idElements) {
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = id;
+          if (comuniInQuestoNuovoGruppo.includes(id)) {
+            option.selected = true; // Pre-seleziona i comuni che dovrebbero far parte di questo nuovo gruppo
+          }
+          select.appendChild(option);
         }
-    </script>
+
+        const groupButton = document.createElement('button');
+        groupButton.textContent = `Raggruppa in ${nuovoId}`;
+        groupButton.addEventListener('click', () => groupSelectedElements(nuovoId, Array.from(select.selectedOptions).map(option => option.value)));
+
+        groupDiv.appendChild(select);
+        groupDiv.appendChild(groupButton);
+        groupingControls.appendChild(groupDiv);
+      });
+    }
+
+    function groupSelectedElements(groupId, selectedIds) {
+      if (!svgDocument) {
+        alert('Nessun SVG caricato.');
+        return;
+      }
+
+      const elementsToGroup = selectedIds.map(id => idElements[id]).filter(el => el);
+
+      if (elementsToGroup.length > 0) {
+        const newGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        newGroup.setAttribute('id', groupId);
+
+        elementsToGroup.forEach(element => {
+          newGroup.appendChild(element);
+        });
+
+        // Aggiungi il nuovo gruppo al documento SVG
+        const firstElement = svgDocument.firstChild;
+        svgDocument.insertBefore(newGroup, firstElement);
+
+        // Ricostruisci la lista degli ID
+        extractAndListIds();
+        // Aggiorna i controlli (opzionale, per riflettere i cambiamenti)
+        generateGroupingControls();
+        alert(`Elementi raggruppati con ID: ${groupId}`);
+      } else {
+        alert('Nessun elemento selezionato da raggruppare.');
+      }
+    }
+  </script>
+
 </body>
 </html>
