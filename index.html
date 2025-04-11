@@ -1,25 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Estrai elemento SVG</title>
+<title>Visualizza e Scarica Porzione SVG</title>
 <style>
   #svgContainer {
-    border: 1px solid black; /* Bordo per visualizzare il contenitore SVG */
+    border: 1px solid black; /* Bordo per visualizzare l'SVG completo */
     width: 500px; /* Larghezza di esempio */
     height: auto; /* Altezza automatica */
-    overflow: auto; /* Aggiunge scroll se l'SVG è grande */
+    overflow: auto; /* Scroll se l'SVG è grande */
   }
 
-  #extractedElementContainer {
+  #extractedSvgContainer {
     margin-top: 20px;
-    border: 1px dashed green; /* Bordo per l'elemento estratto */
+    border: 1px dashed green; /* Bordo per la porzione estratta */
     padding: 10px;
+  }
+
+  #downloadButton {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #downloadButton:hover {
+    background-color: #0056b3;
   }
 </style>
 </head>
 <body>
 
-  <h1>Carica SVG ed Estrai Elemento</h1>
+  <h1>Visualizza e Scarica Porzione SVG</h1>
 
   <input type="file" id="svgFile" accept=".svg">
 
@@ -27,14 +41,35 @@
   <div id="svgContainer">
     </div>
 
-  <h2>Elemento Estratto (ID: Tricarico):</h2>
-  <div id="extractedElementContainer">
+  <h2>Porzione di Tricarico:</h2>
+  <div id="extractedSvgContainer">
     </div>
+
+  <button id="downloadButton" style="display:none;">Scarica SVG di Tricarico</button>
 
   <script>
     const svgFile = document.getElementById('svgFile');
     const svgContainer = document.getElementById('svgContainer');
-    const extractedElementContainer = document.getElementById('extractedElementContainer');
+    const extractedSvgContainer = document.getElementById('extractedSvgContainer');
+    const downloadButton = document.getElementById('downloadButton');
+    let extractedSvgContent = null;
+    const originalSvgAttributes = {
+      xmlns: "http://www.w3.org/2000/svg",
+      version: "1.2",
+      baseProfile: "tiny",
+      width: "1000",
+      height: "1026",
+      viewBox: "0 0 1000 1026",
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
+    };
+    const originalSvgStyle = `
+      <style type="text/css">
+        g.comuni { fill:#eee; stroke-width:0.4; stroke-linecap:square; stroke-linejoin:bevel; stroke-miterlimit:3; stroke-opacity:1; stroke:#888; fill-opacity:1; }
+        g.province { fill:none; stroke-width:0.7; stroke-linecap:square; stroke-linejoin:bevel; stroke-miterlimit:3; stroke-opacity:1; stroke:#444; fill-opacity:1; }
+        g.regioni { fill:none; stroke-width:1; stroke-linecap:square; stroke-linejoin:bevel; stroke-miterlimit:3; stroke-opacity:1; stroke:#000; fill-opacity:1; }
+      </style>
+    `;
 
     svgFile.addEventListener('change', function(event) {
       const file = event.target.files[0];
@@ -42,34 +77,68 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           const svgContent = e.target.result;
-          svgContainer.innerHTML = svgContent; // Inserisci l'intero SVG nel contenitore
+          svgContainer.innerHTML = svgContent; // Inserisci l'intero SVG
 
-          // Estrai l'elemento con l'ID "Tricarico"
+          const originalLoadedSvg = svgContainer.querySelector('svg');
           const tricaricoElement = document.getElementById('Tricarico');
 
-          if (tricaricoElement) {
-            // Crea un nuovo elemento SVG per contenere solo l'elemento estratto
+          if (tricaricoElement && originalLoadedSvg) {
+            const bbox = tricaricoElement.getBBox();
+
+            // Crea un nuovo elemento SVG
             const newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
-            // Copia gli attributi viewBox e altri attributi rilevanti dall'SVG originale (se presenti)
-            const originalSvgElement = svgContainer.querySelector('svg');
-            if (originalSvgElement && originalSvgElement.getAttribute('viewBox')) {
-              newSvg.setAttribute('viewBox', originalSvgElement.getAttribute('viewBox'));
+            // Imposta gli attributi SVG originali
+            for (const attr in originalSvgAttributes) {
+              newSvg.setAttribute(attr.toLowerCase(), originalSvgAttributes[attr]);
             }
-            // Potresti voler copiare anche width e height se definiti nell'SVG originale
 
-            // Importa l'elemento estratto nel nuovo SVG
+            // Imposta il viewBox per inquadrare solo Tricarico
+            newSvg.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+
+            // Aggiungi lo stile originale
+            const styleElement = document.createElementNS("http://www.w3.org/2000/svg", "style");
+            styleElement.setAttribute("type", "text/css");
+            styleElement.textContent = originalSvgStyle.trim();
+            newSvg.appendChild(styleElement);
+
+            // Importa l'elemento Tricarico nel nuovo SVG
             const importedNode = document.importNode(tricaricoElement, true);
             newSvg.appendChild(importedNode);
 
-            // Inserisci il nuovo SVG contenente solo "Tricarico" nel suo contenitore
-            extractedElementContainer.innerHTML = ''; // Pulisci il contenitore precedente
-            extractedElementContainer.appendChild(newSvg);
+            // Inserisci il nuovo SVG nel contenitore
+            extractedSvgContainer.innerHTML = '';
+            extractedSvgContainer.appendChild(newSvg);
+
+            // Prepara il contenuto per il download
+            const serializer = new XMLSerializer();
+            extractedSvgContent = serializer.serializeToString(newSvg);
+
+            // Mostra il pulsante di download
+            downloadButton.style.display = 'block';
           } else {
-            extractedElementContainer.innerHTML = '<p>Elemento con ID "Tricarico" non trovato nel file SVG.</p>';
+            extractedSvgContainer.innerHTML = '<p>Elemento con ID "Tricarico" non trovato nel file SVG.</p>';
+            downloadButton.style.display = 'none';
+            extractedSvgContent = null;
           }
         };
         reader.readAsText(file);
+      }
+    });
+
+    downloadButton.addEventListener('click', function() {
+      if (extractedSvgContent) {
+        const blob = new Blob([extractedSvgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'tricarico.svg';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        alert('Nessuna porzione di Tricarico è stata estratta.');
       }
     });
   </script>
