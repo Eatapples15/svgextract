@@ -1,123 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>SVG Editor con Download</title>
+<title>Estrai elemento SVG</title>
 <style>
-  body { font-family: sans-serif; }
-  #svg-container { border: 1px solid #ccc; margin-bottom: 20px; }
-  .controls { margin-bottom: 10px; }
+  #svgContainer {
+    border: 1px solid black; /* Bordo per visualizzare il contenitore SVG */
+    width: 500px; /* Larghezza di esempio */
+    height: auto; /* Altezza automatica */
+    overflow: auto; /* Aggiunge scroll se l'SVG è grande */
+  }
+
+  #extractedElementContainer {
+    margin-top: 20px;
+    border: 1px dashed green; /* Bordo per l'elemento estratto */
+    padding: 10px;
+  }
 </style>
 </head>
 <body>
 
-  <h1>SVG Editor con Download</h1>
+  <h1>Carica SVG ed Estrai Elemento</h1>
 
-  <div class="controls">
-    <label for="svg-file">Carica file SVG:</label>
-    <input type="file" id="svg-file" accept=".svg">
-  </div>
+  <input type="file" id="svgFile" accept=".svg">
 
-  <div id="svg-container">
+  <h2>SVG Originale:</h2>
+  <div id="svgContainer">
     </div>
 
-  <div class="controls">
-    <button id="download-svg" disabled>Scarica SVG con Basi</button>
-  </div>
+  <h2>Elemento Estratto (ID: Tricarico):</h2>
+  <div id="extractedElementContainer">
+    </div>
 
   <script>
-    const svgFileElement = document.getElementById('svg-file');
-    const svgContainer = document.getElementById('svg-container');
-    const downloadButton = document.getElementById('download-svg');
+    const svgFile = document.getElementById('svgFile');
+    const svgContainer = document.getElementById('svgContainer');
+    const extractedElementContainer = document.getElementById('extractedElementContainer');
 
-    const raggruppamenti = {
-      "Basi A1": ["Atella", "Palazzo San Gervasio", "Pescopagano", "Barile", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Maschito", "Melfi", "Montemilone", "Venosa", "Ginestra"],
-      "Basi A2": ["Balvano", "Muro Lucano", "Baragiano", "Picerno", "Bella", "Brienza", "Castelgrande", "Ruoti", "Sant’ Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Vietri di Potenza", "Tito"],
-      "Basi B": ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Matera", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata"],
-      "Basi C": ["Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant’ Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Missanello", "Moliterno", "Montemurro", "Nemoli", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d’Agri", "San Paolo Albanese", "San Severino Lucano", "Sant’ Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
-      "Basi D": ["Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Nemoli", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
-      "Basi E1": ["Craco", "Montalbano Jonico", "Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi"],
-      "Basi E2": ["Bernalda", "Montescaglioso", "Pisticci", "Pomarico", "Ferrandina"]
-    };
-
-    let svgDocument;
-    let originalSvgString;
-    let idElements = {};
-
-    svgFileElement.addEventListener('change', function(event) {
+    svgFile.addEventListener('change', function(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          svgContainer.innerHTML = e.target.result;
-          originalSvgString = e.target.result;
-          svgDocument = svgContainer.querySelector('svg');
-          if (svgDocument) {
-            extractAndGroupElements();
-            downloadButton.disabled = false;
+          const svgContent = e.target.result;
+          svgContainer.innerHTML = svgContent; // Inserisci l'intero SVG nel contenitore
+
+          // Estrai l'elemento con l'ID "Tricarico"
+          const tricaricoElement = document.getElementById('Tricarico');
+
+          if (tricaricoElement) {
+            // Crea un nuovo elemento SVG per contenere solo l'elemento estratto
+            const newSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+            // Copia gli attributi viewBox e altri attributi rilevanti dall'SVG originale (se presenti)
+            const originalSvgElement = svgContainer.querySelector('svg');
+            if (originalSvgElement && originalSvgElement.getAttribute('viewBox')) {
+              newSvg.setAttribute('viewBox', originalSvgElement.getAttribute('viewBox'));
+            }
+            // Potresti voler copiare anche width e height se definiti nell'SVG originale
+
+            // Importa l'elemento estratto nel nuovo SVG
+            const importedNode = document.importNode(tricaricoElement, true);
+            newSvg.appendChild(importedNode);
+
+            // Inserisci il nuovo SVG contenente solo "Tricarico" nel suo contenitore
+            extractedElementContainer.innerHTML = ''; // Pulisci il contenitore precedente
+            extractedElementContainer.appendChild(newSvg);
           } else {
-            alert('Il file caricato non sembra essere un SVG valido.');
-            downloadButton.disabled = true;
+            extractedElementContainer.innerHTML = '<p>Elemento con ID "Tricarico" non trovato nel file SVG.</p>';
           }
         };
         reader.readAsText(file);
-      } else {
-        svgContainer.innerHTML = '';
-        svgDocument = null;
-        downloadButton.disabled = true;
-      }
-    });
-
-    function extractAndGroupElements() {
-      idElements = {};
-      const allElements = svgDocument.querySelectorAll('*[id]');
-      allElements.forEach(element => {
-        const id = element.getAttribute('id');
-        idElements[id] = element;
-      });
-      console.log("ID Elements:", idElements);
-
-      // Prima rimuovi eventuali gruppi "Basi" esistenti per evitare duplicati
-      const existingBaseGroups = svgDocument.querySelectorAll('g[id^="Basi "]');
-      existingBaseGroups.forEach(group => group.remove());
-
-      for (const nuovoId in raggruppamenti) {
-        const comuniDelGruppo = raggruppamenti[nuovoId];
-        const elementsToGroup = comuniDelGruppo.map(comuneId => idElements[comuneId]).filter(el => el);
-
-        if (elementsToGroup.length > 0) {
-          const newGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-          newGroup.setAttribute('id', nuovoId);
-
-          elementsToGroup.forEach(element => {
-            // Assicurati di rimuovere l'elemento dal suo parent prima di aggiungerlo al nuovo gruppo
-            element.parentNode.removeChild(element);
-            newGroup.appendChild(element);
-          });
-
-          svgDocument.appendChild(newGroup);
-        } else {
-          console.warn(`Nessun elemento trovato per il gruppo: ${nuovoId}`);
-        }
-      }
-
-      alert('Raggruppamento automatico completato!');
-    }
-
-    downloadButton.addEventListener('click', function() {
-      if (svgDocument) {
-        // Ottieni la stringa serializzata dell'elemento SVG modificato
-        const serializer = new XMLSerializer();
-        const newSvgString = serializer.serializeToString(svgDocument);
-
-        // Crea un link temporaneo per il download
-        const downloadLink = document.createElement('a');
-        downloadLink.setAttribute('href', 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(newSvgString));
-        downloadLink.setAttribute('download', 'mappa_con_basi.svg');
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-      } else {
-        alert('Nessun SVG modificato da scaricare.');
       }
     });
   </script>
